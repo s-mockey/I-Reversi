@@ -1,29 +1,29 @@
 # パスすることも必要
-# どっちが勝ったか出力しない
 # -止めバグあり
 
 
 import sys
 import numpy
 import random
+import collections
 
-class Reversi() :
+class Reversi () :
 	# コンストラクタ
 	def __init__ (self) :
-		self.board = numpy.full((8,8),'-')
-		self.board[3,3] = self.board[4,4] = 'O'
-		self.board[3,4] = self.board[4,3] = 'X'
+		self.board_size : int = 8
+		self.board = numpy.full((self.board_size, self.board_size),'-')
+		self.board[int(self.board_size / 2 - 1), int(self.board_size / 2 - 1)] = self.board[int(self.board_size / 2), int(self.board_size / 2)] = 'O'
+		self.board[int(self.board_size / 2 - 1), int(self.board_size / 2)] = self.board[int(self.board_size / 2), int(self.board_size / 2 - 1)] = 'X'
 		self.direction = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 		self.stone_pat = [('X','O'),('O','X')]
 
-
 	# 盤面画面表示出力
 	def view (self) :
-		print (self.board)
+		print(self.board)
 		print('\n')
 
 	# 設石入力
-	def stone_put(self, player) :
+	def stone_put (self, player) :
 		if player == 1 : pos = list(map(int, input(str(player) + 'さんの番です！').split()))
 		else : pos = self.intelligent_put()
 		return pos
@@ -31,7 +31,7 @@ class Reversi() :
 	# AI_Player入力
 	def intelligent_put (self) :
 		# 現時点では乱数による　将来は盤面先読みを再帰する
-		pos = [random.randint(0, 7), random.randint(0, 7)]
+		pos = [random.randint(0, self.board_size), random.randint(0, self.board_size)]
 		return pos
 
 	# 設石判定
@@ -50,7 +50,7 @@ class Reversi() :
 	# 設石判定1
 	def stone_put_chk1 (self, pos) :
 		try :
-			if 0 <= pos[0] <=7 and 0 <= pos[1] <= 7 : return True
+			if 0 <= pos[0] < self.board_size and 0 <= pos[1] < self.board_size : return True
 			raise ValueError()
 		except :
 			return False
@@ -68,12 +68,12 @@ class Reversi() :
 			nx = pos[0] + px
 			ny = pos[1] + py
 
-			if 0 <= nx <= 7 and 0 <= ny <= 7 :
+			if 0 <= nx < self.board_size and 0 <= ny < self.board_size :
 				if self.board[nx, ny] == self.stone_pat[player - 1][0] :
 					while True :
 						nx += px
 						ny += py
-						if 0 <= nx <= 7 and 0 <= ny <= 7 :
+						if 0 <= nx < self.board_size and 0 <= ny < self.board_size :
 							if self.board[nx, ny] == self.stone_pat[player - 1][1] :
 								result.append([px,py])
 								break
@@ -90,17 +90,24 @@ class Reversi() :
 				self.board[nx, ny] = self.stone_pat[player - 1][1]
 				nx += px
 				ny += py
-				if nx < 0 or nx >7 or ny < 0 or ny > 7 or self.board[nx, ny] == self.stone_pat[player - 1][1] : break
+				if nx < 0 or nx >self.board_size or ny < 0 or ny > self.board_size or self.board[nx, ny] == self.stone_pat[player - 1][1] : break
+
+	# 勝敗判定
+	def judge (self) :
+		cnt = 0
+		for i in self.board :
+			cnt += collections.Counter(i)[self.stone_pat[0][1]]
+		print(self.stone_pat[0][1] + ' の数 ＝ ' + str(cnt) + '\n' + self.stone_pat[0][0] + ' の数 ＝ ' + str(pow(self.board_size, 2) - cnt))
 
 	# Player操作
-	def play(self,player) :
+	def play (self,player) :
 		pos = self.stone_put(player)
 		if not (dir := self.stone_put_chk(player, pos)) : return self.play(player)
 		print(pos)
 		self.stone_update(player, pos, dir)
 
 	# ゲーム開始
-	def start(self) :
+	def start (self) :
 		count = 0
 		self.view()
 
@@ -108,6 +115,8 @@ class Reversi() :
 			self.play(count%2+1)
 			self.view()
 			count += 1
+
+		self.judge()
 
 if __name__ == "__main__":
 
